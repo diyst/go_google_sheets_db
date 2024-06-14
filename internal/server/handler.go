@@ -127,15 +127,11 @@ func handleParseCompleteMessage(conn net.Conn) {
 
 func handleQuery(conn net.Conn, message []byte) {
 
+
 	buf := mustEncode((&pgproto3.RowDescription{Fields: []pgproto3.FieldDescription{
 		{
-			Name:                 []byte("lock_status"),
-			TableOID:             0,
-			TableAttributeNumber: 0,
-			DataTypeOID:          25,
-			DataTypeSize:         -1,
-			TypeModifier:         -1,
-			Format:               0,
+			Name: []byte("lock_status"),
+
 		},
 	}}).Encode(nil))
 	buf = mustEncode((&pgproto3.DataRow{Values: [][]byte{[]byte("f")}}).Encode(buf))

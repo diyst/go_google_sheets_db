@@ -1,4 +1,4 @@
-package sheets
+package gsheets
 
 import (
 	"context"
@@ -13,11 +13,12 @@ import (
 	"google.golang.org/api/sheets/v4"
 )
 
-type clientModel struct {
+type ClientModel struct {
 	Service *sheets.Service
+	SheetID string
 }
 
-var Client clientModel
+var Client ClientModel
 
 func StartClient(config *oauth2.Config) error {
 	client, err := newClient(config)
@@ -27,17 +28,26 @@ func StartClient(config *oauth2.Config) error {
 
 	Client = *client
 
+	sheetId, exists := os.LookupEnv("SHEET_ID")
+
+	if !exists {
+		return fmt.Errorf("SHEET_ID is not set")
+	}
+
+	Client.SheetID = sheetId
+
 	return nil
 }
 
-func newClient(config *oauth2.Config) (*clientModel, error) {
+func newClient(config *oauth2.Config) (*ClientModel, error) {
 	client := getClient(config)
+
 	service, err := sheets.NewService(context.Background(), option.WithHTTPClient(client))
 	if err != nil {
 		return nil, err
 	}
 
-	return &clientModel{Service: service}, nil
+	return &ClientModel{Service: service}, nil
 }
 
 func getClient(config *oauth2.Config) *http.Client {

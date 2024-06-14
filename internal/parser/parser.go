@@ -1,21 +1,16 @@
-package sql
+package parser
 
 import (
 	"fmt"
+	"go_google_sheets_db/internal/queriables"
+	"go_google_sheets_db/internal/sql"
 	"log"
 	"regexp"
 	"strconv"
 	"strings"
 )
 
-type table struct {
-	Name    string
-	Columns []column
-}
-
-
-
-func Parse(statement string) (any, error) {
+func Parse(statement string) (queriables.Queriable, error) {
 	statement = strings.ToLower(statement)
 
 	if strings.HasPrefix(statement, "create") {
@@ -41,10 +36,10 @@ func Parse(statement string) (any, error) {
 			tableColumns, err := parseColumns(columns)
 
 			if err != nil {
-				return table{}, err
+				return nil, err
 			}
 
-			return table{
+			return queriables.Table{
 				Name:    tableName,
 				Columns: tableColumns,
 			}, nil
@@ -53,11 +48,20 @@ func Parse(statement string) (any, error) {
 		return nil, nil
 	}
 
+	if strings.HasPrefix(statement, "select") {
+
+		if QueryIsUsingPostgresFunc(statement) {
+			return nil, nil
+		}
+
+		return nil, nil
+	}
+
 	return nil, nil
 }
 
-func parseColumns(columns []string) ([]column, error) {
-	var columnsParsed []column
+func parseColumns(columns []string) ([]sql.Column, error) {
+	var columnsParsed []sql.Column
 
 	var onlyNumberRegex = regexp.MustCompile("^[0-9]+$")
 
@@ -79,7 +83,7 @@ func parseColumns(columns []string) ([]column, error) {
 			return nil, fmt.Errorf("invalid column type: %s", columnType)
 		}
 
-		newColumn := column{
+		newColumn := sql.Column{
 			Name:     name,
 			Type:     columnType,
 			Nullable: true,
@@ -133,7 +137,7 @@ func parseColumns(columns []string) ([]column, error) {
 	return columnsParsed, nil
 }
 
-func createCheck(columnStr string, columnType string) Check {
+func createCheck(columnStr string, columnType string) sql.Check {
 	check := strings.Split(strings.Split(columnStr, "check")[1], ")")[0]
 
 	check = strings.Replace(check, "(", "", 1)
@@ -146,7 +150,7 @@ func createCheck(columnStr string, columnType string) Check {
 
 	checkThreshold := checkDef[2]
 
-	checkInstance := NewCheck(checkOperator, checkThreshold, ParsePostgresTypeToGoType(columnType))
+	checkInstance := sql.NewCheck(checkOperator, checkThreshold, ParsePostgresTypeToGoType(columnType))
 
 	return checkInstance
 }
