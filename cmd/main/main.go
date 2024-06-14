@@ -5,8 +5,8 @@ import (
 	"net"
 
 	"go_google_sheets_db/internal/config"
+	"go_google_sheets_db/internal/gsheets"
 	"go_google_sheets_db/internal/server"
-	"go_google_sheets_db/internal/sheets"
 )
 
 func main() {
@@ -15,7 +15,7 @@ func main() {
 		log.Fatalf("Unable to load config: %v", err)
 	}
 
-	err = sheets.StartClient(cfg)
+	err = gsheets.StartClient(cfg)
 	if err != nil {
 		log.Fatalf("Unable to create Sheets client: %v", err)
 	}
